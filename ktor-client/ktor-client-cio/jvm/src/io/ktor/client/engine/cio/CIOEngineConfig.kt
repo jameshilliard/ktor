@@ -68,7 +68,12 @@ class EndpointConfig {
     var connectTimeout: Long = 5000
 
     /**
+     * Socket timeout in millis.
+     */
+    val socketTimeout: Long = 10000
+
+    /**
      * Maximum number of connection attempts.
      */
-    var connectRetryAttempts: Int = 5
+    var connectRetryAttempts: Int = 1
 }

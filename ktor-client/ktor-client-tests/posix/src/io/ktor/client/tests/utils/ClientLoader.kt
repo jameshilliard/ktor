@@ -16,17 +16,22 @@ actual abstract class ClientLoader {
      */
     actual fun clientTests(
         skipPlatforms: List<String>,
+        skipEngines: List<String>,
         block: suspend TestClientBuilder<HttpClientEngineConfig>.() -> Unit
     ) {
         if ("native" in skipPlatforms) return
 
-        engines.forEach {
-            clientTest(it) {
-                withTimeout(3000) {
-                    block()
+        engines
+            .filter {
+                !skipEngines.contains(it::class.qualifiedName)
+            }
+            .forEach {
+                clientTest(it) {
+                    withTimeout(3000) {
+                        block()
+                    }
                 }
             }
-        }
     }
 
     actual fun dumpCoroutines() {

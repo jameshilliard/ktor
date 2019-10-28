@@ -15,6 +15,7 @@ expect abstract class ClientLoader() {
      */
     fun clientTests(
         skipPlatforms: List<String> = emptyList(),
+        skipEngines: List<String> = emptyList(),
         block: suspend TestClientBuilder<HttpClientEngineConfig>.() -> Unit
     )
 

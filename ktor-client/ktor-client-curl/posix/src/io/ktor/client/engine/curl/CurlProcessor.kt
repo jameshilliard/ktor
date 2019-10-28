@@ -31,11 +31,19 @@ internal class CurlProcessor(
         }
     }
 
-    suspend fun executeRequest(request: CurlRequestData): CurlSuccess {
+    suspend fun executeRequest(request: CurlRequestData, callContext: CoroutineContext): CurlSuccess {
         val deferred = CompletableDeferred<CurlSuccess>()
         responseConsumers[request] = deferred
 
-        worker.execute(TransferMode.SAFE, { request.freeze() }, ::curlSchedule)
+        val easyHandle = worker.execute(TransferMode.SAFE, { request.freeze() }, ::curlSchedule).result
+
+        callContext[Job]!!.invokeOnCompletion { cause ->
+            if (cause == null) return@invokeOnCompletion
+            worker.execute(TransferMode.SAFE, { (easyHandle to cause).freeze() }) {
+                curlApi.cancelRequest(it.first, it.second)
+            }
+        }
+
         activeRequests.incrementAndGet()
 
         while (deferred.isActive) {
@@ -68,8 +76,8 @@ internal class CurlProcessor(
     }
 }
 
-internal fun curlSchedule(request: CurlRequestData) {
-    curlApi.scheduleRequest(request)
+internal fun curlSchedule(request: CurlRequestData): EasyHandle {
+    return curlApi.scheduleRequest(request)
 }
 
 internal fun pollCompleted(): List<CurlResponseData> = curlApi.pollCompleted(100).freeze()

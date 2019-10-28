@@ -6,10 +6,12 @@ package io.ktor.client.engine.apache
 
 import io.ktor.client.call.*
 import io.ktor.client.engine.*
+import io.ktor.client.features.*
 import io.ktor.client.request.*
 import io.ktor.client.utils.*
 import io.ktor.http.*
 import io.ktor.http.content.*
+import io.ktor.util.*
 import kotlinx.atomicfu.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.*
@@ -148,6 +150,7 @@ internal class ApacheRequestProducer(
                 .setConnectTimeout(connectTimeout)
                 .setConnectionRequestTimeout(connectionRequestTimeout)
                 .customRequest()
+                .setupTimeoutAttributes(requestData.attributes)
                 .build()
         }
 
@@ -187,5 +190,11 @@ internal class ApacheRequestProducer(
             HttpClientDefaultPool.recycle(this)
         }
     }
+}
 
+private fun RequestConfig.Builder.setupTimeoutAttributes(attributes: Attributes): RequestConfig.Builder = also {
+    attributes.getOrNull(HttpTimeoutAttributes.key)?.let { timeoutAttributes ->
+        timeoutAttributes.connectTimeout?.let { setConnectTimeout(it.toInt()) }
+        timeoutAttributes.socketTimeout?.let { setSocketTimeout(it.toInt()) }
+    }
 }

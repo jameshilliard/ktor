@@ -118,6 +118,8 @@ class HttpClient(
         }
 
         with(userConfig) {
+            config.install(HttpRequestLifecycle)
+
             if (useDefaultTransformers) {
                 config.install(HttpPlainText)
                 config.install("DefaultTransformers") { defaultTransformers() }

@@ -25,7 +25,7 @@ internal class CurlClientEngine(override val config: CurlClientEngineConfig) : H
         val requestTime = GMTDate()
 
         val curlRequest = data.toCurlRequest(config)
-        val responseData = curlProcessor.executeRequest(curlRequest)
+        val responseData = curlProcessor.executeRequest(curlRequest, callContext)
 
         return with(responseData) {
             val headerBytes = ByteReadChannel(headersBytes).apply {

@@ -11,14 +11,15 @@ import io.ktor.utils.io.ByteChannel
 import io.ktor.utils.io.pool.*
 import java.nio.*
 import java.nio.channels.*
-import java.util.concurrent.CancellationException
 import java.util.concurrent.atomic.*
 import kotlin.coroutines.*
 
 internal abstract class NIOSocketImpl<out S>(
     override val channel: S,
     val selector: SelectorManager,
-    val pool: ObjectPool<ByteBuffer>?
+    val pool: ObjectPool<ByteBuffer>?,
+    private val socketTimeout: Long = 0L,
+    private val parentContext: CoroutineContext = EmptyCoroutineContext
 ) : ReadWriteSocket, SelectableBase(channel), CoroutineScope
     where S : java.nio.channels.ByteChannel, S : java.nio.channels.SelectableChannel {
 
@@ -29,7 +30,7 @@ internal abstract class NIOSocketImpl<out S>(
     override val socketContext: CompletableJob = Job()
 
     override val coroutineContext: CoroutineContext
-        get() = socketContext
+        get() = parentContext + socketContext
 
     // NOTE: it is important here to use different versions of attachForReadingImpl
     // because it is not always valid to use channel's internal buffer for NIO read/write:
@@ -40,16 +41,16 @@ internal abstract class NIOSocketImpl<out S>(
     final override fun attachForReading(channel: ByteChannel): WriterJob {
         return attachFor("reading", channel, writerJob) {
             if (pool != null) {
-                attachForReadingImpl(channel, this.channel, this, selector, pool)
+                attachForReadingImpl(channel, this.channel, this, selector, pool, socketTimeout)
             } else {
-                attachForReadingDirectImpl(channel, this.channel, this, selector)
+                attachForReadingDirectImpl(channel, this.channel, this, selector, socketTimeout)
             }
         }
     }
 
     final override fun attachForWriting(channel: ByteChannel): ReaderJob {
         return attachFor("writing", channel, readerJob) {
-            attachForWritingDirectImpl(channel, this.channel, this, selector)
+            attachForWritingDirectImpl(channel, this.channel, this, selector, socketTimeout)
         }
     }
 
@@ -104,7 +105,7 @@ internal abstract class NIOSocketImpl<out S>(
         return try {
             channel.close()
             super.close()
-            socketContext.complete()
+//            socketContext.complete()
             null
         } catch (t: Throwable) {
             t
@@ -113,6 +114,7 @@ internal abstract class NIOSocketImpl<out S>(
         }
     }
 
+    @UseExperimental(InternalCoroutinesApi::class)
     private fun checkChannels() {
         if (closeFlag.get() && readerJob.completedOrNotStarted && writerJob.completedOrNotStarted) {
             val e1 = readerJob.exception
@@ -140,7 +142,6 @@ internal abstract class NIOSocketImpl<out S>(
 
     @UseExperimental(InternalCoroutinesApi::class)
     private val AtomicReference<out Job?>.exception: Throwable?
-        get() = get()?.takeUnless { it.isActive || it.isCancelled }
+        get() = get()?.takeIf { it.isCancelled }
             ?.getCancellationException() // TODO it should be completable deferred or provide its own exception
-            ?.let { (it as? CancellationException)?.cause }
 }

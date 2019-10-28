@@ -10,7 +10,6 @@ import io.ktor.util.date.*
 import kotlinx.coroutines.*
 import org.apache.http.concurrent.*
 import org.apache.http.impl.nio.client.*
-import org.apache.http.protocol.*
 import kotlin.coroutines.*
 
 internal suspend fun CloseableHttpAsyncClient.sendRequest(
@@ -47,5 +46,10 @@ internal suspend fun CloseableHttpAsyncClient.sendRequest(
         }
     }
 
-    execute(request, consumer, callback)
+    execute(request, consumer, callback).apply {
+        // We need to cancel Apache future if it's not needed anymore.
+        continuation.invokeOnCancellation {
+            cancel(true)
+        }
+    }
 }

@@ -6,6 +6,7 @@ package io.ktor.client.engine.okhttp
 
 import io.ktor.client.call.*
 import io.ktor.client.engine.*
+import io.ktor.client.features.*
 import io.ktor.client.request.*
 import io.ktor.client.utils.*
 import io.ktor.http.*
@@ -18,6 +19,9 @@ import okhttp3.*
 import okhttp3.internal.http.HttpMethod
 import okio.*
 import java.io.*
+import java.net.*
+import java.util.*
+import java.util.concurrent.*
 import kotlin.coroutines.*
 
 @InternalAPI
@@ -39,14 +43,18 @@ class OkHttpEngine(override val config: OkHttpConfig) : HttpClientEngineBase("kt
         builder.build()
     }
 
+    private val clientCache = createNewClientCache(maxSize = 8)
+
     override suspend fun execute(data: HttpRequestData): HttpResponseData {
         val callContext = callContext()
         val engineRequest = data.convertToOkHttpRequest(callContext)
 
+        val requestEngine = clientCache.computeIfAbsent(engine, data.attributes)
+
         return if (data.isUpgradeRequest()) {
-            executeWebSocketRequest(engineRequest, callContext)
+            executeWebSocketRequest(requestEngine, engineRequest, callContext)
         } else {
-            executeHttpRequest(engineRequest, callContext)
+            executeHttpRequest(requestEngine, engineRequest, callContext)
         }
     }
 
@@ -65,6 +73,7 @@ class OkHttpEngine(override val config: OkHttpConfig) : HttpClientEngineBase("kt
     }
 
     private suspend fun executeWebSocketRequest(
+        engine: OkHttpClient,
         engineRequest: Request,
         callContext: CoroutineContext
     ): HttpResponseData {
@@ -76,9 +85,13 @@ class OkHttpEngine(override val config: OkHttpConfig) : HttpClientEngineBase("kt
     }
 
     private suspend fun executeHttpRequest(
+        engine: OkHttpClient,
         engineRequest: Request,
         callContext: CoroutineContext
     ): HttpResponseData {
+        println("engine.connectTimeoutMillis() = ${engine.connectTimeoutMillis()}")
+        println("engine.readTimeoutMillis() = ${engine.readTimeoutMillis()}")
+        println("engine.writeTimeoutMillis() = ${engine.writeTimeoutMillis()}")
         val requestTime = GMTDate()
         val response = engine.execute(engineRequest)
 
@@ -105,7 +118,14 @@ private fun BufferedSource.toChannel(context: CoroutineContext): ByteReadChannel
         var lastRead = 0
         while (source.isOpen && context.isActive && lastRead >= 0) {
             channel.write { buffer ->
-                lastRead = source.read(buffer)
+                lastRead = try {
+                    source.read(buffer)
+                } catch (e: Throwable) {
+                    throw when (e) {
+                        is SocketTimeoutException -> HttpSocketTimeoutException()
+                        else -> e
+                    }
+                }
             }
         }
     }
@@ -140,4 +160,49 @@ internal fun OutgoingContent.convertToOkHttpBody(callContext: CoroutineContext):
     }
     is OutgoingContent.NoContent -> RequestBody.create(null, ByteArray(0))
     else -> throw UnsupportedContentTypeException(this)
+}
+
+/**
+ * Synchronized LRU cache based on [LinkedHashMap] with specified [maxSize].
+ */
+private fun createNewClientCache(maxSize: Int): MutableMap<HttpTimeoutAttributes?, OkHttpClient> =
+    Collections.synchronizedMap(object : LinkedHashMap<HttpTimeoutAttributes?, OkHttpClient>(10, 0.75f, true) {
+        override fun removeEldestEntry(eldest: Map.Entry<HttpTimeoutAttributes?, OkHttpClient>): Boolean {
+            return size > maxSize
+        }
+    })
+
+/**
+ * Take [OkHttpClient] from cache or compute a new one if there is no client with specified [attributes].
+ */
+private fun MutableMap<HttpTimeoutAttributes?, OkHttpClient>.computeIfAbsent(
+    baseClient: OkHttpClient,
+    attributes: Attributes
+): OkHttpClient {
+    if (!attributes.contains(HttpTimeoutAttributes.key)) return baseClient
+    return attributes[HttpTimeoutAttributes.key].let { timeoutAttributes ->
+        synchronized(this) {
+            var res = get(timeoutAttributes)
+            if (res != null) {
+                return res
+            }
+
+            res = baseClient.newBuilder()
+                .setupTimeoutAttributes(timeoutAttributes)
+                .build()
+
+            put(timeoutAttributes, res)
+
+            res
+        }
+    }
+}
+
+private fun OkHttpClient.Builder.setupTimeoutAttributes(timeoutAttributes: HttpTimeoutAttributes): OkHttpClient.Builder {
+    timeoutAttributes.connectTimeout?.let { connectTimeout(it, TimeUnit.MILLISECONDS) }
+    timeoutAttributes.socketTimeout?.let {
+        readTimeout(it, TimeUnit.MILLISECONDS)
+        writeTimeout(it, TimeUnit.MILLISECONDS)
+    }
+    return this
 }

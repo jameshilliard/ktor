@@ -20,12 +20,12 @@ class HttpRedirect {
         override fun prepare(block: Unit.() -> Unit): HttpRedirect = HttpRedirect()
 
         override fun install(feature: HttpRedirect, scope: HttpClient) {
-            scope.feature(HttpSend)!!.intercept { origin ->
-                handleCall(origin)
+            scope.feature(HttpSend)!!.intercept { context, origin ->
+                handleCall(context, origin)
             }
         }
 
-        private suspend fun Sender.handleCall(origin: HttpClientCall): HttpClientCall {
+        private suspend fun Sender.handleCall(context: HttpRequestBuilder, origin: HttpClientCall): HttpClientCall {
             if (!origin.response.status.isRedirect()) return origin
 
             var call = origin
@@ -35,7 +35,7 @@ class HttpRedirect {
                 call.close()
 
                 call = execute(HttpRequestBuilder().apply {
-                    takeFrom(origin.request)
+                    takeFrom(context)
                     url.parameters.clear()
 
                     location?.let { url.takeFrom(it) }

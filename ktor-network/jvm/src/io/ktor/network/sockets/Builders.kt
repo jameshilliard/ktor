@@ -7,6 +7,7 @@ package io.ktor.network.sockets
 import io.ktor.network.selector.*
 import java.net.*
 import java.nio.channels.*
+import kotlin.coroutines.*
 
 /**
  * Represent a configurable socket
@@ -79,8 +80,10 @@ class TcpSocketBuilder internal constructor(
     suspend fun connect(
         hostname: String,
         port: Int,
+        socketTimeout: Long = 0L,
+        parentContext: CoroutineContext = EmptyCoroutineContext,
         configure: SocketOptions.TCPClientSocketOptions.() -> Unit = {}
-    ): Socket = connect(InetSocketAddress(hostname, port), configure)
+    ): Socket = connect(InetSocketAddress(hostname, port), socketTimeout, parentContext, configure)
 
     /**
      * Bind server socket at [port] to listen to [hostname]
@@ -96,6 +99,8 @@ class TcpSocketBuilder internal constructor(
      */
     suspend fun connect(
         remoteAddress: SocketAddress,
+        socketTimeout: Long = 0,
+        parentContext: CoroutineContext = EmptyCoroutineContext,
         configure: SocketOptions.TCPClientSocketOptions.() -> Unit = {}
     ): Socket = selector.buildOrClose({ openSocketChannel() }) {
         val options = options.peer().tcp()
@@ -103,7 +108,7 @@ class TcpSocketBuilder internal constructor(
         assignOptions(options)
         nonBlocking()
 
-        SocketImpl(this, socket()!!, selector).apply {
+        SocketImpl(this, socket()!!, selector, socketTimeout, parentContext).apply {
             connect(remoteAddress)
         }
     }

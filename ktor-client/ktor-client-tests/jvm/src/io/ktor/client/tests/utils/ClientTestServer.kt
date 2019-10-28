@@ -23,6 +23,7 @@ internal fun Application.tests() {
     contentTestServer()
     fullFormTest()
     redirectTest()
+    timeoutTest()
 
     routing {
         post("/echo") {

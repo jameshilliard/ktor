@@ -7,12 +7,16 @@ package io.ktor.network.sockets
 import io.ktor.network.selector.*
 import java.net.*
 import java.nio.channels.*
+import kotlin.coroutines.*
 
 internal class SocketImpl<out S : SocketChannel>(
     override val channel: S,
     private val socket: java.net.Socket,
-    selector: SelectorManager
-) : NIOSocketImpl<S>(channel, selector, pool = null), Socket {
+    selector: SelectorManager,
+    socketTimeout: Long = 0L,
+    parentContext: CoroutineContext = EmptyCoroutineContext
+) : NIOSocketImpl<S>(channel, selector, pool = null, socketTimeout = socketTimeout, parentContext = parentContext),
+    Socket {
     init {
         require(!channel.isBlocking) { "channel need to be configured as non-blocking" }
     }

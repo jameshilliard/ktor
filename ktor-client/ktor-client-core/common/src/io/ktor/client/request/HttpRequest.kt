@@ -83,7 +83,7 @@ class HttpRequestBuilder : HttpMessageBuilder {
      * A deferred used to control the execution of this request.
      */
     @KtorExperimentalAPI
-    val executionContext: Job = Job()
+    var executionContext: Job? = null
 
     /**
      * Call specific attributes.
@@ -101,7 +101,7 @@ class HttpRequestBuilder : HttpMessageBuilder {
     fun build(): HttpRequestData = HttpRequestData(
         url.build(), method, headers.build(),
         body as? OutgoingContent ?: error("No request transformation found: $body"),
-        executionContext, attributes
+        executionContext!!, attributes
     )
 
     /**
@@ -115,6 +115,7 @@ class HttpRequestBuilder : HttpMessageBuilder {
      * Mutates [this] copying all the data from another [builder] using it as base.
      */
     fun takeFrom(builder: HttpRequestBuilder): HttpRequestBuilder {
+        executionContext = builder.executionContext
         method = builder.method
         body = builder.body
         url.takeFrom(builder.url)

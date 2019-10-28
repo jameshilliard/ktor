@@ -4,6 +4,7 @@
 
 package io.ktor.client.engine.apache
 
+import io.ktor.client.features.*
 import kotlinx.atomicfu.*
 import kotlinx.coroutines.*
 import io.ktor.utils.io.*
@@ -11,6 +12,7 @@ import org.apache.http.*
 import org.apache.http.nio.*
 import org.apache.http.nio.protocol.*
 import org.apache.http.protocol.*
+import java.net.*
 import kotlin.coroutines.*
 import kotlin.coroutines.intrinsics.*
 
@@ -115,7 +117,13 @@ internal class ApacheResponseConsumer(
 
     override fun failed(cause: Exception) {
         exception = cause
-        cancel(CancellationException("Fail to execute request", cause))
+        cancel(
+            when (cause) {
+                is ConnectException -> HttpConnectTimeoutException()
+                is SocketTimeoutException -> HttpSocketTimeoutException()
+                else -> CancellationException("Fail to execute request", cause)
+            }
+        )
         releaseContinuation(Result.failure(cause))
     }
 

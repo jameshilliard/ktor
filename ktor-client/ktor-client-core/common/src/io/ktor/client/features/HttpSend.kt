@@ -13,7 +13,7 @@ import io.ktor.util.*
 /**
  * HttpSend pipeline interceptor function
  */
-typealias HttpSendInterceptor = suspend Sender.(HttpClientCall) -> HttpClientCall
+typealias HttpSendInterceptor = suspend Sender.(HttpRequestBuilder, HttpClientCall) -> HttpClientCall
 
 /**
  * This interface represents a request send pipeline interceptor chain
@@ -66,7 +66,7 @@ class HttpSend(
                     callChanged = false
 
                     passInterceptors@ for (interceptor in feature.interceptors) {
-                        val transformed = interceptor(sender, currentCall)
+                        val transformed = interceptor(sender, context, currentCall)
                         if (transformed === currentCall) continue@passInterceptors
 
                         currentCall = transformed

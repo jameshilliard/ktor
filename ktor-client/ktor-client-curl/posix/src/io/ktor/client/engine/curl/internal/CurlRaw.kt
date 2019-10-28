@@ -6,6 +6,7 @@ package io.ktor.client.engine.curl.internal
 
 import io.ktor.client.call.*
 import io.ktor.client.engine.*
+import io.ktor.client.features.*
 import io.ktor.client.request.*
 import io.ktor.http.*
 import io.ktor.http.content.*
@@ -24,7 +25,8 @@ internal suspend fun HttpRequestData.toCurlRequest(config: HttpClientEngineConfi
     method = method.value,
     headers = headersToCurl(),
     proxy = config.proxy,
-    content = body.toCurlByteArray()
+    content = body.toCurlByteArray(),
+    connectTimeout = attributes.getOrNull(HttpTimeoutAttributes.key)?.connectTimeout ?: 0
 )
 
 internal class CurlRequestData(
@@ -32,10 +34,11 @@ internal class CurlRequestData(
     val method: String,
     val headers: CPointer<curl_slist>,
     val proxy: ProxyConfig?,
-    val content: ByteArray
+    val content: ByteArray,
+    val connectTimeout: Long
 ) {
     override fun toString(): String =
-        "CurlRequestData(url='$url', method='$method', content: ${content.size} bytes)"
+        "CurlRequestData(url='$url', method='$method', content: ${content.size} bytes, connect timeout: ${connectTimeout})"
 }
 
 internal class CurlResponseBuilder(val request: CurlRequestData) {

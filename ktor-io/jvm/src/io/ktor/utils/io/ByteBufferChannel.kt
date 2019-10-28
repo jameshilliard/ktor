@@ -2025,7 +2025,14 @@ internal class ByteBufferChannel(
     }
 
     private suspend fun readUTF8LineToAscii(out: Appendable, limit: Int): Boolean {
-        if (state === ReadWriteBufferState.Terminated) return false
+        if (state === ReadWriteBufferState.Terminated) {
+            val cause = closedCause
+            if (cause != null) {
+                throw cause
+            }
+
+            return false
+        }
 
         var consumed = 0
 
