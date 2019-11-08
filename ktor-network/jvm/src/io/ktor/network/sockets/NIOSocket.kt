@@ -105,7 +105,6 @@ internal abstract class NIOSocketImpl<out S>(
         return try {
             channel.close()
             super.close()
-//            socketContext.complete()
             null
         } catch (t: Throwable) {
             t
