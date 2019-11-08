@@ -10,7 +10,7 @@ import kotlinx.coroutines.*
 /**
  * Wrap [block] into [withTimeout] wrapper and throws [SocketTimeoutException] if timeout exceeded.
  */
-suspend fun CoroutineScope.withSocketTimeout(socketTimeout: Long, block: suspend CoroutineScope.() -> Unit) {
+internal suspend fun CoroutineScope.withSocketTimeout(socketTimeout: Long, block: suspend CoroutineScope.() -> Unit) {
     if (socketTimeout == 0L) {
         block()
     }
