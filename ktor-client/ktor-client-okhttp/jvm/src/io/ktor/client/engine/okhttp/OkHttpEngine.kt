@@ -24,6 +24,11 @@ import java.util.*
 import java.util.concurrent.*
 import kotlin.coroutines.*
 
+/**
+ * Size of the cache that keeps least recently used [OkHttpClient] instances.
+ */
+private const val CLIENT_CACHE_SIZE = 10
+
 @InternalAPI
 @Suppress("KDocMissingDocumentation")
 class OkHttpEngine(override val config: OkHttpConfig) : HttpClientEngineBase("ktor-okhttp") {
@@ -43,13 +48,16 @@ class OkHttpEngine(override val config: OkHttpConfig) : HttpClientEngineBase("kt
         builder.build()
     }
 
-    private val clientCache = createNewClientCache(maxSize = 8)
+    /**
+     * Cache that keeps least recently used [OkHttpClient] instances.
+     */
+    private val clientCache = createLRUCache(::createOkHttpClient, {}, CLIENT_CACHE_SIZE)
 
     override suspend fun execute(data: HttpRequestData): HttpResponseData {
         val callContext = callContext()
         val engineRequest = data.convertToOkHttpRequest(callContext)
 
-        val requestEngine = clientCache.computeIfAbsent(engine, data.attributes)
+        val requestEngine = clientCache[data.attributes] ?: error("OkHttpClient can't be constructed")
 
         return if (data.isUpgradeRequest()) {
             executeWebSocketRequest(requestEngine, engineRequest, callContext)
@@ -111,6 +119,12 @@ class OkHttpEngine(override val config: OkHttpConfig) : HttpClientEngineBase("kt
 
         return HttpResponseData(status, requestTime, headers, version, body, callContext)
     }
+
+    private fun createOkHttpClient(attributes: Attributes) = attributes.getOrNull(HttpTimeoutAttributes.key)?.let {
+        engine.newBuilder()
+            .setupTimeoutAttributes(it)
+            .build()
+    } ?: engine
 }
 
 private fun BufferedSource.toChannel(context: CoroutineContext): ByteReadChannel = GlobalScope.writer(context) {
@@ -163,41 +177,8 @@ internal fun OutgoingContent.convertToOkHttpBody(callContext: CoroutineContext):
 }
 
 /**
- * Synchronized LRU cache based on [LinkedHashMap] with specified [maxSize].
+ * Update [OkHttpClient.Builder] setting timeout configuration taken from [HttpTimeoutAttributes].
  */
-private fun createNewClientCache(maxSize: Int): MutableMap<HttpTimeoutAttributes?, OkHttpClient> =
-    Collections.synchronizedMap(object : LinkedHashMap<HttpTimeoutAttributes?, OkHttpClient>(10, 0.75f, true) {
-        override fun removeEldestEntry(eldest: Map.Entry<HttpTimeoutAttributes?, OkHttpClient>): Boolean {
-            return size > maxSize
-        }
-    })
-
-/**
- * Take [OkHttpClient] from cache or compute a new one if there is no client with specified [attributes].
- */
-private fun MutableMap<HttpTimeoutAttributes?, OkHttpClient>.computeIfAbsent(
-    baseClient: OkHttpClient,
-    attributes: Attributes
-): OkHttpClient {
-    if (!attributes.contains(HttpTimeoutAttributes.key)) return baseClient
-    return attributes[HttpTimeoutAttributes.key].let { timeoutAttributes ->
-        synchronized(this) {
-            var res = get(timeoutAttributes)
-            if (res != null) {
-                return res
-            }
-
-            res = baseClient.newBuilder()
-                .setupTimeoutAttributes(timeoutAttributes)
-                .build()
-
-            put(timeoutAttributes, res)
-
-            res
-        }
-    }
-}
-
 private fun OkHttpClient.Builder.setupTimeoutAttributes(timeoutAttributes: HttpTimeoutAttributes): OkHttpClient.Builder {
     timeoutAttributes.connectTimeout?.let { connectTimeout(it, TimeUnit.MILLISECONDS) }
     timeoutAttributes.socketTimeout?.let {
