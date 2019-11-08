@@ -10,11 +10,11 @@ import io.ktor.util.*
 actual inline fun <reified T : Throwable> assertFailsWithRootCause(block: () -> Unit) {
     try {
         block()
-        error("Expected exception, but it wasn't thrown")
+        error("Expected ${T::class} exception, but it wasn't thrown")
     }
     catch (cause: Throwable) {
         if (cause !is T && cause.message?.contains(T::class.simpleName!!) == true) {
-            error("Expected exception, but it wasn't thrown")
+            error("Expected ${T::class} exception, but it wasn't thrown")
         }
     }
 }
