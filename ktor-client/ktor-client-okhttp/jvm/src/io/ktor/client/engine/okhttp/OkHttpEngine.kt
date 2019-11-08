@@ -97,9 +97,6 @@ class OkHttpEngine(override val config: OkHttpConfig) : HttpClientEngineBase("kt
         engineRequest: Request,
         callContext: CoroutineContext
     ): HttpResponseData {
-        println("engine.connectTimeoutMillis() = ${engine.connectTimeoutMillis()}")
-        println("engine.readTimeoutMillis() = ${engine.readTimeoutMillis()}")
-        println("engine.writeTimeoutMillis() = ${engine.writeTimeoutMillis()}")
         val requestTime = GMTDate()
         val response = engine.execute(engineRequest)
 
