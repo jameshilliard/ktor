@@ -74,6 +74,12 @@ class OkHttpEngine(override val config: OkHttpConfig) : HttpClientEngineBase("kt
                 engine.dispatcher().executorService().shutdown()
                 engine.connectionPool().evictAll()
                 engine.cache()?.close()
+
+                clientCache.forEach{ (_, client) ->
+                    client.dispatcher().executorService().shutdown()
+                    client.connectionPool().evictAll()
+                    client.cache()?.close()
+                }
             }.invokeOnCompletion {
                 (dispatcher as Closeable).close()
             }
