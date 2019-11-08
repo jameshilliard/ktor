@@ -134,10 +134,10 @@ private fun BufferedSource.toChannel(context: CoroutineContext): ByteReadChannel
             channel.write { buffer ->
                 lastRead = try {
                     source.read(buffer)
-                } catch (e: Throwable) {
-                    throw when (e) {
+                } catch (cause: Throwable) {
+                    throw when (cause) {
                         is SocketTimeoutException -> HttpSocketTimeoutException()
-                        else -> e
+                        else -> cause
                     }
                 }
             }
