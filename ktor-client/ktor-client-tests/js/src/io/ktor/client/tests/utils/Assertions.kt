@@ -14,7 +14,7 @@ actual inline fun <reified T : Throwable> assertFailsWithRootCause(block: () -> 
     }
     catch (cause: Throwable) {
         if (cause !is T && cause.message?.contains(T::class.simpleName!!) == true) {
-            error("Expected ${T::class} exception, but it wasn't thrown")
+            error("Expected ${T::class} exception, but $cause was thrown instead")
         }
     }
 }
