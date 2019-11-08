@@ -7,6 +7,7 @@ package io.ktor.client.engine.cio
 import io.ktor.network.selector.*
 import io.ktor.network.sockets.*
 import io.ktor.network.sockets.Socket
+import io.ktor.network.sockets.SocketOptions
 import kotlinx.coroutines.sync.*
 import java.net.*
 import kotlin.coroutines.*
@@ -19,12 +20,12 @@ internal class ConnectionFactory(
 
     suspend fun connect(
         address: InetSocketAddress,
-        socketTimeout: Long,
-        parentContext: CoroutineContext = EmptyCoroutineContext
+        parentContext: CoroutineContext = EmptyCoroutineContext,
+        configure: SocketOptions.TCPClientSocketOptions.() -> Unit = {}
     ): Socket {
         semaphore.acquire()
         return try {
-            aSocket(selector).tcpNoDelay().tcp().connect(address, socketTimeout, parentContext)
+            aSocket(selector).tcpNoDelay().tcp().connect(address, parentContext, configure)
         } catch (cause: Throwable) {
             // a failure or cancellation
             semaphore.release()

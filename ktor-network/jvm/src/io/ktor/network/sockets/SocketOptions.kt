@@ -145,6 +145,11 @@ sealed class SocketOptions(
          */
         var keepAlive: Boolean? = null
 
+        /**
+         * Socket timeout. Default value is 0 that means infinite timeout.
+         */
+        var socketTimeout: Long = 0
+
         @Suppress("KDocMissingDocumentation")
         override fun copyCommon(from: SocketOptions) {
             super.copyCommon(from)
