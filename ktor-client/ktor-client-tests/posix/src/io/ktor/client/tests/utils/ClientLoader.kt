@@ -15,15 +15,12 @@ actual abstract class ClientLoader {
      * Perform test against all clients from dependencies.
      */
     actual fun clientTests(
-        skipPlatforms: List<String>,
         skipEngines: List<String>,
         block: suspend TestClientBuilder<HttpClientEngineConfig>.() -> Unit
     ) {
-        if ("native" in skipPlatforms) return
-
         engines
             .filter {
-                !skipEngines.contains(it::class.qualifiedName)
+                it::class.simpleName !in skipEngines
             }
             .forEach {
                 clientTest(it) {

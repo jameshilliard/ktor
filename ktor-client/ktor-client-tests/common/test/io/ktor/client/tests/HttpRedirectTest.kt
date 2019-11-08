@@ -44,7 +44,7 @@ class HttpRedirectTest : ClientLoader() {
     }
 
     @Test
-    fun redirectWithCookiesTest() = clientTests(listOf("js")) {
+    fun redirectWithCookiesTest() = clientTests(listOf("Js")) {
         config {
             install(HttpCookies)
             install(HttpRedirect)
@@ -109,7 +109,7 @@ class HttpRedirectTest : ClientLoader() {
     }
 
     @Test
-    fun redirectHostAbsolute() = clientTests(listOf("js")) {
+    fun redirectHostAbsolute() = clientTests(listOf("Js")) {
         test { client ->
             client.get<HttpResponse>("$TEST_URL_BASE/directory/hostAbsoluteRedirect").use {
                 assertEquals("200 OK", it.readText())

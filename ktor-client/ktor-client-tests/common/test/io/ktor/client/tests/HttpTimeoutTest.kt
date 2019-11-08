@@ -7,18 +7,10 @@ package io.ktor.client.tests
 import io.ktor.client.call.*
 import io.ktor.client.features.*
 import io.ktor.client.request.*
-import io.ktor.client.request.forms.*
-import io.ktor.client.response.*
 import io.ktor.client.tests.utils.*
 import io.ktor.http.*
-import io.ktor.http.content.*
-import io.ktor.util.date.*
-import io.ktor.utils.io.*
 import io.ktor.utils.io.core.*
-import kotlinx.coroutines.*
-import kotlinx.serialization.*
 import kotlin.test.*
-import kotlin.time.*
 
 class HttpTimeoutTest : ClientLoader() {
     @Test
@@ -99,9 +91,7 @@ class HttpTimeoutTest : ClientLoader() {
     }
 
     @Test
-    fun getRequestTimeoutWithSeparateReceiveTest() = clientTests(
-        listOf("native")                                // Native performs receiving inside call.
-    ) {
+    fun getRequestTimeoutWithSeparateReceiveTest() = clientTests(listOf("Curl", "Ios")) {
         config {
             install(HttpTimeout) { requestTimeout = 1000 }
         }
@@ -115,9 +105,7 @@ class HttpTimeoutTest : ClientLoader() {
     }
 
     @Test
-    fun getRequestTimeoutWithSeparateReceivePerRequestAttributesTest() = clientTests(
-        listOf("native")                                // Native performs receiving inside call.
-    ) {
+    fun getRequestTimeoutWithSeparateReceivePerRequestAttributesTest() = clientTests(listOf("Curl", "Ios")) {
         config {
             install(HttpTimeout)
         }
@@ -290,10 +278,7 @@ class HttpTimeoutTest : ClientLoader() {
     }
 
     @Test
-    fun connectTimeoutTest() = clientTests(
-        listOf("js"),                               // JS doesn't support connect timeout.
-        listOf("io.ktor.client.engine.ios.Ios")     // iOS doesn't support connect timeout.
-    ) {
+    fun connectTimeoutTest() = clientTests(listOf("Js", "Ios")) {
         config {
             install(HttpTimeout) { connectTimeout = 1000 }
         }
@@ -306,10 +291,7 @@ class HttpTimeoutTest : ClientLoader() {
     }
 
     @Test
-    fun connectTimeoutPerRequestAttributesTest() = clientTests(
-        listOf("js"),                               // JS doesn't support connect timeout.
-        listOf("io.ktor.client.engine.ios.Ios")     // iOS doesn't support connect timeout.
-    ) {
+    fun connectTimeoutPerRequestAttributesTest() = clientTests(listOf("Js", "Ios")) {
         config {
             install(HttpTimeout)
         }
@@ -327,10 +309,7 @@ class HttpTimeoutTest : ClientLoader() {
     }
 
     @Test
-    fun socketTimeoutReadTest() = clientTests(
-        listOf("js"),                               // JS doesn't support socket timeout.
-        listOf("io.ktor.client.engine.curl.Curl")   // Curl doesn't support socket timeout.
-    ) {
+    fun socketTimeoutReadTest() = clientTests(listOf("Js", "Curl")) {
         config {
             install(HttpTimeout) { socketTimeout = 1000 }
         }
@@ -343,10 +322,7 @@ class HttpTimeoutTest : ClientLoader() {
     }
 
     @Test
-    fun socketTimeoutReadPerRequestAttributesTest() = clientTests(
-        listOf("js"),                               // JS doesn't support socket timeout.
-        listOf("io.ktor.client.engine.curl.Curl")   // Curl doesn't support socket timeout.
-    ) {
+    fun socketTimeoutReadPerRequestAttributesTest() = clientTests(listOf("Js", "Curl")) {
         config {
             install(HttpTimeout)
         }
@@ -364,13 +340,7 @@ class HttpTimeoutTest : ClientLoader() {
     }
 
     @Test
-    fun socketTimeoutWriteFailOnWriteTest() = clientTests(
-        listOf("js"),                               // JS doesn't support socket timeout.
-        listOf(
-            "io.ktor.client.engine.curl.Curl",      // Curl doesn't support socket timeout.
-            "io.ktor.client.engine.android.Android" // Android doesn't support socket timeout on write operations.
-        )
-    ) {
+    fun socketTimeoutWriteFailOnWriteTest() = clientTests(listOf("Js", "Curl", "Android")) {
         config {
             install(HttpTimeout) { socketTimeout = 500 }
         }
@@ -383,13 +353,7 @@ class HttpTimeoutTest : ClientLoader() {
     }
 
     @Test
-    fun socketTimeoutWriteFailOnWritePerRequestAttributesTest() = clientTests(
-        listOf("js"),                               // JS doesn't support socket timeout.
-        listOf(
-            "io.ktor.client.engine.curl.Curl",      // Curl doesn't support socket timeout.
-            "io.ktor.client.engine.android.Android" // Android doesn't support socket timeout on write operations.
-        )
-    ) {
+    fun socketTimeoutWriteFailOnWritePerRequestAttributesTest() = clientTests(listOf("Js", "Curl", "Android")) {
         config {
             install(HttpTimeout)
         }

@@ -15,10 +15,9 @@ actual abstract class ClientLoader {
      * Perform test against all clients from dependencies.
      */
     actual fun clientTests(
-        skipPlatforms: List<String>,
         skipEngines: List<String>,
         block: suspend TestClientBuilder<HttpClientEngineConfig>.() -> Unit
-    ): dynamic = if ("js" in skipPlatforms) GlobalScope.async {}.asPromise() else clientTest {
+    ): dynamic = if ("Js" in skipEngines) GlobalScope.async {}.asPromise() else clientTest {
         withTimeout(30 * 1000) {
             block()
         }
