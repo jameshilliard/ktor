@@ -21,7 +21,9 @@ class OkHttpEngineTests {
                     yield()
                 }
 
-                assertTrue("OkHttp dispatcher is still working.") { okHttpClient.dispatcher().executorService().isShutdown }
+                assertTrue("OkHttp dispatcher is still working.") {
+                    okHttpClient.dispatcher().executorService().isShutdown
+                }
                 assertEquals(0, okHttpClient.connectionPool().connectionCount())
                 okHttpClient.cache()?.let { assertTrue("OkHttp client cache is not closed.") { it.isClosed } }
             }

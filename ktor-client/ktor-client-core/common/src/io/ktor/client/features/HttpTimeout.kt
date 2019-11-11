@@ -13,7 +13,11 @@ import kotlinx.coroutines.*
  * Client HTTP timeout feature. There are no default values, so default timeouts will be taken from engine configuration
  * or considered as infinite time if engine doesn't provide them.
  */
-class HttpTimeout(private val requestTimeout: Long?, private val connectTimeout: Long?, private val socketTimeout: Long?) {
+class HttpTimeout(
+    private val requestTimeout: Long?,
+    private val connectTimeout: Long?,
+    private val socketTimeout: Long?
+) {
     /**
      * [HttpTimeout] configuration that is used during installation.
      */

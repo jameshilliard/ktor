@@ -30,8 +30,7 @@ internal class HttpRequestLifecycle {
                 try {
                     context.executionContext = executionContext
                     proceed()
-                }
-                catch(cause: Throwable) {
+                } catch (cause: Throwable) {
                     executionContext.completeExceptionally(cause)
                     throw cause
                 } finally {

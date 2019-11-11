@@ -147,7 +147,7 @@ internal class Endpoint(
 
                 if (address.isUnresolved) throw UnresolvedAddressException()
 
-                val connection = when(connectTimeout) {
+                val connection = when (connectTimeout) {
                     0L -> connectionFactory.connect(address, ExceptionMapper()) {
                         this.socketTimeout = socketTimeout
                     }

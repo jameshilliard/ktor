@@ -49,7 +49,10 @@ class BasicAuth(val username: String, val password: String) {
         override fun install(feature: BasicAuth, scope: HttpClient) {
             scope.requestPipeline.intercept(HttpRequestPipeline.State) {
                 if (context.headers.getAll(HttpHeaders.Authorization) != null) return@intercept
-                context.headers.append(HttpHeaders.Authorization, constructBasicAuthValue(feature.username, feature.password))
+                context.headers.append(
+                    HttpHeaders.Authorization,
+                    constructBasicAuthValue(feature.username, feature.password)
+                )
             }
         }
 

@@ -98,8 +98,7 @@ open class HttpClientCall internal constructor(
             }
 
             return result
-        }
-        catch (cause: Throwable) {
+        } catch (cause: Throwable) {
             close()
             throw cause
         }
