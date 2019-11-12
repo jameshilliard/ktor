@@ -98,7 +98,7 @@ class TcpSocketBuilder internal constructor(
      */
     suspend fun connect(
         remoteAddress: SocketAddress,
-        parentContext: CoroutineContext = EmptyCoroutineContext,
+        context: CoroutineContext = EmptyCoroutineContext,
         configure: SocketOptions.TCPClientSocketOptions.() -> Unit = {}
     ): Socket = selector.buildOrClose({ openSocketChannel() }) {
         val options = options.peer().tcp()
@@ -106,7 +106,7 @@ class TcpSocketBuilder internal constructor(
         assignOptions(options)
         nonBlocking()
 
-        SocketImpl(this, socket()!!, selector, options.socketTimeout, parentContext).apply {
+        SocketImpl(this, socket()!!, selector, options.socketTimeout, context).apply {
             connect(remoteAddress)
         }
     }

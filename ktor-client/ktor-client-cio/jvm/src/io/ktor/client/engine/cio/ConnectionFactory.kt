@@ -20,12 +20,12 @@ internal class ConnectionFactory(
 
     suspend fun connect(
         address: InetSocketAddress,
-        parentContext: CoroutineContext = EmptyCoroutineContext,
+        context: CoroutineContext = EmptyCoroutineContext,
         configure: SocketOptions.TCPClientSocketOptions.() -> Unit = {}
     ): Socket {
         semaphore.acquire()
         return try {
-            aSocket(selector).tcpNoDelay().tcp().connect(address, parentContext, configure)
+            aSocket(selector).tcpNoDelay().tcp().connect(address, context, configure)
         } catch (cause: Throwable) {
             // a failure or cancellation
             semaphore.release()
