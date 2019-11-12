@@ -5,6 +5,7 @@
 package io.ktor.client.engine.android
 
 import io.ktor.client.features.*
+import io.ktor.client.utils.*
 import io.ktor.util.*
 import io.ktor.util.cio.*
 import io.ktor.utils.io.*
@@ -72,40 +73,13 @@ internal fun HttpURLConnection.content(callScope: CoroutineContext): ByteReadCha
  * Returns [ByteReadChannel] with [ByteChannel.close] handler that returns [HttpSocketTimeoutException] instead of
  * [SocketTimeoutException].
  */
+@InternalAPI
 private fun ByteReadChannel.withSocketTimeoutExceptionMapping(): ByteReadChannel =
-    withCloseHandler { cause, close ->
+    withCloseHandler { cause, rootCause, close ->
         close(
-            when (cause?.rootCause) {
+            when (rootCause) {
                 is SocketTimeoutException -> HttpSocketTimeoutException()
                 else -> cause
             }
         )
-    }
-
-/**
- * Return [ByteReadChannel] similar to the original channel, but with specified [ByteChannel.close] handler.
- */
-private fun ByteReadChannel.withCloseHandler(
-    block: (Throwable?, (Throwable?) -> Boolean) -> Boolean
-): ByteReadChannel = ByteChannel(autoFlush = true).also {
-    GlobalScope.launch {
-        joinTo(
-            object : ByteChannel by it {
-                override fun close(cause: Throwable?) = block(cause, it::close)
-            },
-            closeOnEnd = true
-        )
-    }
-}
-
-/**
- * Root cause of the [Throwable].
- */
-private val Throwable.rootCause: Throwable?
-    get() {
-        var rootCause: Throwable? = this
-        while (rootCause?.cause != null) {
-            rootCause = rootCause.cause
-        }
-        return rootCause
     }
