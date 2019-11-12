@@ -83,7 +83,7 @@ class HttpRequestBuilder : HttpMessageBuilder {
      * A deferred used to control the execution of this request.
      */
     @KtorExperimentalAPI
-    var executionContext: Job? = null
+    lateinit var executionContext: Job
 
     /**
      * Call specific attributes.
@@ -115,7 +115,10 @@ class HttpRequestBuilder : HttpMessageBuilder {
      * Mutates [this] copying all the data from another [builder] using it as base.
      */
     fun takeFrom(builder: HttpRequestBuilder): HttpRequestBuilder {
-        executionContext = builder.executionContext
+        if (builder::executionContext.isInitialized) {
+            executionContext = builder.executionContext
+        }
+
         method = builder.method
         body = builder.body
         url.takeFrom(builder.url)
