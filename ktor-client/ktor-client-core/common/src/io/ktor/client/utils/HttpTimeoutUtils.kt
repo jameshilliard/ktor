@@ -24,15 +24,3 @@ fun ByteReadChannel.withCloseHandler(
         )
     }
 }
-
-/**
- * Root cause of the [Throwable].
- */
-private val Throwable.rootCause: Throwable?
-    get() {
-        var rootCause: Throwable? = this
-        while (rootCause?.cause != null) {
-            rootCause = rootCause.cause
-        }
-        return rootCause
-    }
