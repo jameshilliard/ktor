@@ -194,10 +194,15 @@ internal class Endpoint(
 
         connections.decrementAndGet()
 
-        throw when (timeoutFails) {
-            retryAttempts -> HttpConnectTimeoutException()
-            else -> FailToConnectException()
-        }
+        throw getTimeoutException(retryAttempts, timeoutFails)
+    }
+
+    /**
+     * Defines exact type of exception based on [retryAttempts] and [timeoutFails].
+     */
+    private fun getTimeoutException(retryAttempts: Int, timeoutFails: Int) = when (timeoutFails) {
+        retryAttempts -> HttpConnectTimeoutException()
+        else -> FailToConnectException()
     }
 
     /**
