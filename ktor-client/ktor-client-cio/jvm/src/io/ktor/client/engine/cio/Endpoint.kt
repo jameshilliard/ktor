@@ -152,16 +152,16 @@ internal class Endpoint(
                         this.socketTimeout = socketTimeout
                     }
                     else -> {
-                        val conn = withTimeoutOrNull(connectTimeout) {
+                        val connection = withTimeoutOrNull(connectTimeout) {
                             connectionFactory.connect(address, ExceptionMapper()) {
                                 this.socketTimeout = socketTimeout
                             }
                         }
-                        if (conn == null) {
+                        if (connection == null) {
                             timeoutFails++
                             return@repeat
                         }
-                        conn
+                        connection
                     }
                 }
 
