@@ -13,9 +13,8 @@ internal class SocketImpl<out S : SocketChannel>(
     override val channel: S,
     private val socket: java.net.Socket,
     selector: SelectorManager,
-    socketTimeout: Long = 0L,
-    parentContext: CoroutineContext = EmptyCoroutineContext
-) : NIOSocketImpl<S>(channel, selector, pool = null, socketTimeout = socketTimeout, parentContext = parentContext),
+    socketTimeout: Long = 0L
+) : NIOSocketImpl<S>(channel, selector, null, socketTimeout),
     Socket {
     init {
         require(!channel.isBlocking) { "channel need to be configured as non-blocking" }

@@ -80,9 +80,8 @@ class TcpSocketBuilder internal constructor(
     suspend fun connect(
         hostname: String,
         port: Int,
-        parentContext: CoroutineContext = EmptyCoroutineContext,
         configure: SocketOptions.TCPClientSocketOptions.() -> Unit = {}
-    ): Socket = connect(InetSocketAddress(hostname, port), parentContext, configure)
+    ): Socket = connect(InetSocketAddress(hostname, port), configure)
 
     /**
      * Bind server socket at [port] to listen to [hostname]
@@ -98,7 +97,6 @@ class TcpSocketBuilder internal constructor(
      */
     suspend fun connect(
         remoteAddress: SocketAddress,
-        context: CoroutineContext = EmptyCoroutineContext,
         configure: SocketOptions.TCPClientSocketOptions.() -> Unit = {}
     ): Socket = selector.buildOrClose({ openSocketChannel() }) {
         val options = options.peer().tcp()
@@ -106,7 +104,7 @@ class TcpSocketBuilder internal constructor(
         assignOptions(options)
         nonBlocking()
 
-        SocketImpl(this, socket()!!, selector, options.socketTimeout, context).apply {
+        SocketImpl(this, socket()!!, selector, options.socketTimeout).apply {
             connect(remoteAddress)
         }
     }

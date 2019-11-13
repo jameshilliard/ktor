@@ -18,8 +18,7 @@ internal abstract class NIOSocketImpl<out S>(
     override val channel: S,
     val selector: SelectorManager,
     val pool: ObjectPool<ByteBuffer>?,
-    private val socketTimeout: Long = 0L,
-    private val parentContext: CoroutineContext = EmptyCoroutineContext
+    private val socketTimeout: Long = 0L
 ) : ReadWriteSocket, SelectableBase(channel), CoroutineScope
     where S : java.nio.channels.ByteChannel, S : java.nio.channels.SelectableChannel {
 
@@ -30,7 +29,7 @@ internal abstract class NIOSocketImpl<out S>(
     override val socketContext: CompletableJob = Job()
 
     override val coroutineContext: CoroutineContext
-        get() = parentContext + socketContext
+        get() = socketContext
 
     // NOTE: it is important here to use different versions of attachForReadingImpl
     // because it is not always valid to use channel's internal buffer for NIO read/write:

@@ -6,16 +6,20 @@ package io.ktor.client.engine.cio
 
 import io.ktor.client.features.*
 import io.ktor.client.request.*
+import io.ktor.client.utils.*
 import io.ktor.network.sockets.*
 import io.ktor.network.sockets.Socket
 import io.ktor.network.tls.*
 import io.ktor.util.*
 import io.ktor.util.date.*
+import io.ktor.utils.io.*
+import io.ktor.utils.io.ByteChannel
 import kotlinx.atomicfu.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
 import java.io.*
 import java.net.*
+import java.net.SocketTimeoutException
 import java.nio.channels.*
 import kotlin.coroutines.*
 
@@ -89,7 +93,7 @@ internal class Endpoint(
         val (request, response, callContext) = task
         try {
             val connection = connect(request.attributes)
-            val input = connection.openReadChannel()
+            val input = connection.openReadChannel().withSocketTimeoutExceptionMapping()
             val output = connection.openWriteChannel()
             val requestTime = GMTDate()
 
@@ -148,12 +152,12 @@ internal class Endpoint(
                 if (address.isUnresolved) throw UnresolvedAddressException()
 
                 val connection = when (connectTimeout) {
-                    0L -> connectionFactory.connect(address, ExceptionMapper()) {
+                    0L -> connectionFactory.connect(address) {
                         this.socketTimeout = socketTimeout
                     }
                     else -> {
                         val connection = withTimeoutOrNull(connectTimeout) {
-                            connectionFactory.connect(address, ExceptionMapper()) {
+                            connectionFactory.connect(address) {
                                 this.socketTimeout = socketTimeout
                             }
                         }
@@ -245,3 +249,18 @@ open class ConnectException : Exception("Connect timed out or retry attempts exc
 @Suppress("KDocMissingDocumentation")
 @KtorExperimentalAPI
 class FailToConnectException : Exception("Connect timed out or retry attempts exceeded")
+
+/**
+ * Returns [ByteReadChannel] with [ByteChannel.close] handler that returns [HttpSocketTimeoutException] instead of
+ * [SocketTimeoutException].
+ */
+@InternalAPI
+private fun ByteReadChannel.withSocketTimeoutExceptionMapping(): ByteReadChannel =
+    withCloseHandler { cause, rootCause, close ->
+        close(
+            when (rootCause) {
+                is io.ktor.network.sockets.SocketTimeoutException -> HttpSocketTimeoutException()
+                else -> cause
+            }
+        )
+    }
