@@ -7,6 +7,7 @@ package io.ktor.client.features
 import io.ktor.client.*
 import io.ktor.client.request.*
 import io.ktor.util.*
+import io.ktor.utils.io.errors.*
 import kotlinx.coroutines.*
 
 /**
@@ -80,24 +81,19 @@ class HttpTimeout(
 }
 
 /**
- * This exception is thrown by [HttpTimeout] to indicate timeout.
- */
-open class HttpTimeoutCancellationException(message: String? = null) : CancellationException(message)
-
-/**
  * This exception is thrown in case request timeout exceeded.
  */
-class HttpRequestTimeoutException() : HttpTimeoutCancellationException("Request timeout has been expired")
+class HttpRequestTimeoutException() : CancellationException("Request timeout has been expired")
 
 /**
  * This exception is thrown in case connect timeout exceeded.
  */
-class HttpConnectTimeoutException() : HttpTimeoutCancellationException("Connect timeout has been expired")
+expect open class HttpConnectTimeoutException : Throwable
 
 /**
  * This exception is thrown in case socket timeout exceeded.
  */
-class HttpSocketTimeoutException() : HttpTimeoutCancellationException("Socket timeout has been expired")
+expect open class HttpSocketTimeoutException : Throwable
 
 /**
  * Container for timeout attributes to be stored in [HttpRequest.attributes].

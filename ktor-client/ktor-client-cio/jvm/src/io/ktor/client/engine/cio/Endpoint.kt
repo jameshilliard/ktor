@@ -259,7 +259,7 @@ private fun ByteReadChannel.withSocketTimeoutExceptionMapping(): ByteReadChannel
     withCloseHandler { cause, rootCause, close ->
         close(
             when (rootCause) {
-                is io.ktor.network.sockets.SocketTimeoutException -> HttpSocketTimeoutException()
+                is SocketTimeoutException -> HttpSocketTimeoutException()
                 else -> cause
             }
         )

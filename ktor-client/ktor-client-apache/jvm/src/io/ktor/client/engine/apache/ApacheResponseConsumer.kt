@@ -118,11 +118,13 @@ internal class ApacheResponseConsumer(
     override fun failed(cause: Exception) {
         exception = cause
         cancel(
-            when (cause) {
-                is ConnectException -> HttpConnectTimeoutException()
-                is SocketTimeoutException -> HttpSocketTimeoutException()
-                else -> CancellationException("Fail to execute request", cause)
-            }
+            CancellationException(
+                "Fail to execute request", when (cause) {
+                    is ConnectException -> HttpConnectTimeoutException()
+                    is SocketTimeoutException -> HttpSocketTimeoutException()
+                    else -> cause
+                }
+            )
         )
         releaseContinuation(Result.failure(cause))
     }

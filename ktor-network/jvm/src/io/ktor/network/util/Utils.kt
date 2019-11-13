@@ -4,8 +4,8 @@
 
 package io.ktor.network.util
 
-import io.ktor.network.sockets.*
 import kotlinx.coroutines.*
+import java.net.*
 
 /**
  * Wrap [block] into [withTimeout] wrapper and throws [SocketTimeoutException] if timeout exceeded.
@@ -13,8 +13,7 @@ import kotlinx.coroutines.*
 internal suspend fun CoroutineScope.withSocketTimeout(socketTimeout: Long, block: suspend CoroutineScope.() -> Unit) {
     if (socketTimeout == 0L) {
         block()
-    }
-    else {
+    } else {
         async {
             withTimeoutOrNull(socketTimeout, block) ?: throw SocketTimeoutException()
         }.await()

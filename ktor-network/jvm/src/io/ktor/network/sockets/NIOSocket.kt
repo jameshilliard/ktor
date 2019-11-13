@@ -141,5 +141,5 @@ internal abstract class NIOSocketImpl<out S>(
     @UseExperimental(InternalCoroutinesApi::class)
     private val AtomicReference<out Job?>.exception: Throwable?
         get() = get()?.takeIf { it.isCancelled }
-            ?.getCancellationException() // TODO it should be completable deferred or provide its own exception
+            ?.getCancellationException()?.cause // TODO it should be completable deferred or provide its own exception
 }
