@@ -7,7 +7,6 @@ package io.ktor.network.sockets
 import io.ktor.network.selector.*
 import java.net.*
 import java.nio.channels.*
-import kotlin.coroutines.*
 
 /**
  * Represent a configurable socket

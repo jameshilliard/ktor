@@ -186,7 +186,8 @@ internal class ApacheRequestProducer(
     }
 
     private fun ByteBuffer.recycle() {
-        if (requestData.body is OutgoingContent.WriteChannelContent || requestData.body is OutgoingContent.ReadChannelContent) {
+        if (requestData.body is OutgoingContent.WriteChannelContent ||
+            requestData.body is OutgoingContent.ReadChannelContent) {
             HttpClientDefaultPool.recycle(this)
         }
     }

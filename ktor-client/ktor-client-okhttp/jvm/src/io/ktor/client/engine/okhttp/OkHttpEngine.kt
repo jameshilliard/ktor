@@ -20,7 +20,6 @@ import okhttp3.internal.http.HttpMethod
 import okio.*
 import java.io.*
 import java.net.*
-import java.util.*
 import java.util.concurrent.*
 import kotlin.coroutines.*
 
@@ -182,7 +181,9 @@ internal fun OutgoingContent.convertToOkHttpBody(callContext: CoroutineContext):
 /**
  * Update [OkHttpClient.Builder] setting timeout configuration taken from [HttpTimeoutAttributes].
  */
-private fun OkHttpClient.Builder.setupTimeoutAttributes(timeoutAttributes: HttpTimeoutAttributes): OkHttpClient.Builder {
+private fun OkHttpClient.Builder.setupTimeoutAttributes(
+    timeoutAttributes: HttpTimeoutAttributes
+): OkHttpClient.Builder {
     timeoutAttributes.connectTimeout?.let { connectTimeout(it, TimeUnit.MILLISECONDS) }
     timeoutAttributes.socketTimeout?.let {
         readTimeout(it, TimeUnit.MILLISECONDS)
