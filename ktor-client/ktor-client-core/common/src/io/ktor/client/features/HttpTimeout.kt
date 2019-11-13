@@ -7,7 +7,6 @@ package io.ktor.client.features
 import io.ktor.client.*
 import io.ktor.client.request.*
 import io.ktor.util.*
-import io.ktor.utils.io.errors.*
 import kotlinx.coroutines.*
 
 /**
@@ -22,23 +21,16 @@ class HttpTimeout(
     /**
      * [HttpTimeout] configuration that is used during installation.
      */
-    class Configuration {
-        /**
-         * Request timeout in milliseconds.
-         */
-        var requestTimeout: Long? = null
-
-        /**
-         * Connect timeout in milliseconds.
-         */
-        var connectTimeout: Long? = null
-
-        /**
-         * Socket timeout in milliseconds.
-         */
+    class Configuration(
+        var requestTimeout: Long? = null,
+        var connectTimeout: Long? = null,
         var socketTimeout: Long? = null
-
+    ) {
         internal fun build(): HttpTimeout = HttpTimeout(requestTimeout, connectTimeout, socketTimeout)
+
+        companion object {
+            val key = AttributeKey<Configuration>("Timeout")
+        }
     }
 
     /**
@@ -53,11 +45,11 @@ class HttpTimeout(
         @UseExperimental(InternalCoroutinesApi::class)
         override fun install(feature: HttpTimeout, scope: HttpClient) {
             scope.requestPipeline.intercept(HttpRequestPipeline.Before) {
-                if (!context.attributes.contains(HttpTimeoutAttributes.key)) {
-                    context.attributes.put(HttpTimeoutAttributes.key, HttpTimeoutAttributes())
+                if (!context.attributes.contains(Configuration.key)) {
+                    context.attributes.put(Configuration.key, Configuration())
                 }
 
-                context.attributes[HttpTimeoutAttributes.key].apply {
+                context.attributes[Configuration.key].apply {
                     connectTimeout = connectTimeout ?: feature.connectTimeout
                     socketTimeout = socketTimeout ?: feature.socketTimeout
                     requestTimeout = requestTimeout ?: feature.requestTimeout
@@ -83,27 +75,14 @@ class HttpTimeout(
 /**
  * This exception is thrown in case request timeout exceeded.
  */
-class HttpRequestTimeoutException() : CancellationException("Request timeout has been expired")
+class HttpRequestTimeoutException : CancellationException("Request timeout has been expired")
 
 /**
  * This exception is thrown in case connect timeout exceeded.
  */
-expect open class HttpConnectTimeoutException : Throwable
+expect class HttpConnectTimeoutException : Throwable
 
 /**
  * This exception is thrown in case socket timeout exceeded.
  */
-expect open class HttpSocketTimeoutException : Throwable
-
-/**
- * Container for timeout attributes to be stored in [HttpRequest.attributes].
- */
-data class HttpTimeoutAttributes(
-    var requestTimeout: Long? = null,
-    var connectTimeout: Long? = null,
-    var socketTimeout: Long? = null
-) {
-    companion object {
-        val key = AttributeKey<HttpTimeoutAttributes>("TimeoutAttributes")
-    }
-}
+expect class HttpSocketTimeoutException : Throwable

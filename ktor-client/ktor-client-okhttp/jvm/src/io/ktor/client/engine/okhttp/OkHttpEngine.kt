@@ -122,7 +122,7 @@ class OkHttpEngine(override val config: OkHttpConfig) : HttpClientEngineBase("kt
         return HttpResponseData(status, requestTime, headers, version, body, callContext)
     }
 
-    private fun createOkHttpClient(attributes: Attributes) = attributes.getOrNull(HttpTimeoutAttributes.key)?.let {
+    private fun createOkHttpClient(attributes: Attributes) = attributes.getOrNull(HttpTimeout.Configuration.key)?.let {
         engine.newBuilder()
             .setupTimeoutAttributes(it)
             .build()
@@ -179,10 +179,10 @@ internal fun OutgoingContent.convertToOkHttpBody(callContext: CoroutineContext):
 }
 
 /**
- * Update [OkHttpClient.Builder] setting timeout configuration taken from [HttpTimeoutAttributes].
+ * Update [OkHttpClient.Builder] setting timeout configuration taken from [HttpTimeout.Configuration].
  */
 private fun OkHttpClient.Builder.setupTimeoutAttributes(
-    timeoutAttributes: HttpTimeoutAttributes
+    timeoutAttributes: HttpTimeout.Configuration
 ): OkHttpClient.Builder {
     timeoutAttributes.connectTimeout?.let { connectTimeout(it, TimeUnit.MILLISECONDS) }
     timeoutAttributes.socketTimeout?.let {

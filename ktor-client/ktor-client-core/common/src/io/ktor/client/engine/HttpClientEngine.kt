@@ -42,7 +42,14 @@ interface HttpClientEngine : CoroutineScope, Closeable {
     @InternalAPI
     fun install(client: HttpClient) {
         client.requestPipeline.intercept(HttpRequestPipeline.Before) {
-            context.executionContext = this@HttpClientEngine.coroutineContext[Job]!!
+            val clientEngineJob = this@HttpClientEngine.coroutineContext[Job]!!
+            clientEngineJob.invokeOnCompletion { cause ->
+                if (cause != null) {
+                    context.executionContext.cancel("Engine failed", cause)
+                } else {
+                    (context.executionContext[Job] as CompletableJob).complete()
+                }
+            }
         }
 
         client.sendPipeline.intercept(HttpSendPipeline.Engine) { content ->

@@ -58,7 +58,7 @@ internal class JettyHttp2Engine(override val config: JettyEngineConfig) : HttpCl
             name = "ktor-jetty-client-qtp"
         }
 
-        setupTimeoutAttributes(attributes.getOrNull(HttpTimeoutAttributes.key))
+        setupTimeoutAttributes(attributes.getOrNull(HttpTimeout.Configuration.key))
 
         start()
     }
@@ -67,7 +67,7 @@ internal class JettyHttp2Engine(override val config: JettyEngineConfig) : HttpCl
 /**
  * Update [HTTP2Client] to use connect and socket timeouts specified by [HttpTimeout] feature.
  */
-private fun HTTP2Client.setupTimeoutAttributes(timeoutAttributes: HttpTimeoutAttributes?) {
+private fun HTTP2Client.setupTimeoutAttributes(timeoutAttributes: HttpTimeout.Configuration?) {
     timeoutAttributes?.connectTimeout?.let {
         connectTimeout = when (it) {
             0L -> Long.MAX_VALUE

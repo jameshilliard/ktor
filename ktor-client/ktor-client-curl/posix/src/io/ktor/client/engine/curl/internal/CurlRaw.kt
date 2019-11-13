@@ -26,7 +26,7 @@ internal suspend fun HttpRequestData.toCurlRequest(config: HttpClientEngineConfi
     headers = headersToCurl(),
     proxy = config.proxy,
     content = body.toCurlByteArray(),
-    connectTimeout = attributes.getOrNull(HttpTimeoutAttributes.key)?.connectTimeout ?: 0
+    connectTimeout = attributes.getOrNull(HttpTimeout.Configuration.key)?.connectTimeout ?: 0
 )
 
 internal class CurlRequestData(

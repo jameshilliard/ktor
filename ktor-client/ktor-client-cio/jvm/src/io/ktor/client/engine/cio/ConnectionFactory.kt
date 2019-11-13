@@ -20,11 +20,11 @@ internal class ConnectionFactory(
 
     suspend fun connect(
         address: InetSocketAddress,
-        configure: SocketOptions.TCPClientSocketOptions.() -> Unit = {}
+        configuration: SocketOptions.TCPClientSocketOptions.() -> Unit = {}
     ): Socket {
         semaphore.acquire()
         return try {
-            aSocket(selector).tcpNoDelay().tcp().connect(address, configure)
+            aSocket(selector).tcpNoDelay().tcp().connect(address, configuration)
         } catch (cause: Throwable) {
             // a failure or cancellation
             semaphore.release()

@@ -29,5 +29,5 @@ internal data class ConnectionResponseTask(
 /**
  * Return true if request task contains timeout attributes specified using [HttpTimeout] feature.
  */
-private fun RequestTask.containsCustomTimeouts() = request.attributes.contains(HttpTimeoutAttributes.key) &&
-    request.attributes[HttpTimeoutAttributes.key].let { it.connectTimeout != null || it.socketTimeout != null }
+private fun RequestTask.containsCustomTimeouts() = request.attributes.contains(HttpTimeout.Configuration.key) &&
+    request.attributes[HttpTimeout.Configuration.key].let { it.connectTimeout != null || it.socketTimeout != null }

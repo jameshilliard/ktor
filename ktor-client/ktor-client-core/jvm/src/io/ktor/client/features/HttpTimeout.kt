@@ -10,4 +10,4 @@ import java.net.*
 actual class HttpConnectTimeoutException : ConnectException("Connect timeout has been expired")
 
 @Suppress("ACTUAL_WITHOUT_EXPECT")
-actual class HttpSocketTimeoutException : ConnectException("Socket timeout has been expired")
+actual class HttpSocketTimeoutException : SocketTimeoutException("Socket timeout has been expired")
